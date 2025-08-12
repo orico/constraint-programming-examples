@@ -2,6 +2,8 @@
 
 This repository contains various implementations of constraint programming solutions using Google's OR-Tools library. Each project demonstrates different aspects of constraint programming and optimization techniques.
 
+You can read the Medium article [here](https://cohenori.medium.com/optimizing-university-course-scheduling-a-constraint-programming-approach-a4f1533037a3)
+
 ## What is Constraint Programming?
 
 Constraint programming (CP) is a programming paradigm where relations between variables are stated in the form of constraints. It's particularly useful for solving complex combinatorial problems such as:
