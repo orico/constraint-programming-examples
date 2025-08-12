@@ -1,5 +1,7 @@
 # Optimizing University Course Scheduling: A Constraint Programming Approach
 
+> The complete code for this article and more constraint programming examples are available on GitHub: [constraint-programming-examples](https://github.com/orico/constraint-programming-examples)
+
 In today's complex educational landscape, universities face a challenging puzzle: how to efficiently schedule courses while maximizing revenue and satisfying numerous operational constraints. In this article, we'll explore how constraint programming can be used to solve this intricate optimization problem.
 
 ## The Challenge
