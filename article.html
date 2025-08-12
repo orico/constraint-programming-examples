@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Optimizing University Course Scheduling: A Constraint Programming Approach</h1>
+
+<p>In today's complex educational landscape, universities face a challenging puzzle: how to efficiently schedule courses while maximizing revenue and satisfying numerous operational constraints. In this article, we'll explore how constraint programming can be used to solve this intricate optimization problem.</p>
+
+<h2>The Challenge</h2>
+
+<p>Universities must juggle multiple moving parts when creating course schedules:</p>
+<ul>
+<li>Multiple professors with varying availability and expertise</li>
+<li>Limited classroom resources with different equipment</li>
+<li>Course duration requirements</li>
+<li>Room setup times</li>
+<li>Equipment compatibility</li>
+<li>Time slot conflicts</li>
+<li>Cost considerations</li>
+<li>Revenue optimization</li>
+</ul>
+
+<p>Traditional manual scheduling approaches often lead to suboptimal solutions, leaving money on the table and creating operational inefficiencies.</p>
+
+<h2>Choosing the Right Optimization Approach: Linear Programming vs. CP-SAT</h2>
+
+<p>Google OR-Tools provides two powerful approaches for solving optimization problems. Here's a comprehensive comparison:</p>
+
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Linear Programming (LP/MIP)</th>
+<th>Constraint Programming (CP-SAT)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Variable Types</strong></td>
+<td>Continuous variables</td>
+<td>Primarily boolean and integer variables</td>
+</tr>
+<tr>
+<td><strong>Best For</strong></td>
+<td>• Resource allocation with fractional values<br>• Production planning<br>• Financial optimization<br>• Supply chain optimization</td>
+<td>• Scheduling problems<br>• Timetabling<br>• Resource assignment<br>• Configuration problems</td>
+</tr>
+<tr>
+<td><strong>Constraint Expression</strong></td>
+<td>Must be linear inequalities</td>
+<td>Natural logical expressions and rich constraints</td>
+</tr>
+<tr>
+<td><strong>Solution Strategy</strong></td>
+<td>Continuous relaxation and branch-and-bound</td>
+<td>Boolean satisfaction with learning</td>
+</tr>
+<tr>
+<td><strong>Performance Focus</strong></td>
+<td>Finding provably optimal solutions</td>
+<td>Finding good solutions quickly</td>
+</tr>
+<tr>
+<td><strong>Modeling Complexity</strong></td>
+<td>Complex for logical constraints</td>
+<td>Simple for logical and temporal constraints</td>
+</tr>
+<tr>
+<td><strong>Built-in Constraints</strong></td>
+<td>Basic linear constraints</td>
+<td>Rich set (AllDifferent, Circuit, etc.)</td>
+</tr>
+<tr>
+<td><strong>Typical Applications</strong></td>
+<td>• Financial portfolio optimization<br>• Manufacturing planning<br>• Transportation routing</td>
+<td>• Course scheduling<br>• Employee shifts<br>• Sports tournaments<br>• Equipment assignment</td>
+</tr>
+<tr>
+<td><strong>Strengths</strong></td>
+<td>• Exact optimal solutions<br>• Good with continuous variables<br>• Strong theoretical guarantees</td>
+<td>• Natural modeling<br>• Efficient for scheduling<br>• Better with logical constraints<br>• Faster modeling iteration</td>
+</tr>
+<tr>
+<td><strong>Limitations</strong></td>
+<td>• Complex for logical constraints<br>• Can be slow for discrete problems</td>
+<td>• May not find provably optimal solutions<br>• Less suitable for continuous variables</td>
+</tr>
+</tbody>
+</table>
+
+<h3>Why We Chose CP-SAT for Course Scheduling</h3>
+
+<p>Our university scheduling problem aligns perfectly with CP-SAT's strengths:</p>
+
+<ol>
+<li><strong>Natural Problem Modeling</strong>: Our constraints (no overlap, equipment requirements, professor availability) map directly to CP-SAT's constraint primitives.</li>
+<li><strong>Discrete Time Structure</strong>: Our 30-minute time slots fit CP-SAT's integer variable handling, making the model more intuitive and efficient.</li>
+<li><strong>Complex Logic</strong>: Our requirements include many logical relationships that would be cumbersome in LP:
+<ul>
+<li>IF room has equipment THEN course can be scheduled</li>
+<li>Either course A OR course B can use a room at a time</li>
+<li>Professor can't be in two places at once</li>
+</ul>
+</li>
+<li><strong>Solution Requirements</strong>: We need good feasible solutions quickly rather than provably optimal solutions, matching CP-SAT's solving approach.</li>
+</ol>
+
+<h3>Deep Dive: Boolean vs. Integer Variables in CP-SAT</h3>
+
+<p>CP-SAT offers both boolean and integer variables, each suited for different modeling needs:</p>
+
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Boolean Variables</th>
+<th>Integer Variables</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Value Range</strong></td>
+<td>Only 0 or 1</td>
+<td>Any integer within defined bounds</td>
+</tr>
+<tr>
+<td><strong>Memory Usage</strong></td>
+<td>More efficient</td>
+<td>Uses more memory</td>
+</tr>
+<tr>
+<td><strong>Solving Speed</strong></td>
+<td>Faster to solve</td>
+<td>Can be slower to solve</td>
+</tr>
+<tr>
+<td><strong>Best For</strong></td>
+<td>• Yes/No decisions<br>• Assignment problems<br>• Mutual exclusion</td>
+<td>• Counting<br>• Resource levels<br>• Time slots<br>• Quantities</td>
+</tr>
+</tbody>
+</table>
+
+<h4>When to Use Each Type</h4>
+
+<p><strong>Boolean Variables</strong>:</p>
+<ul>
+<li>When modeling binary decisions (is course scheduled in this slot?)</li>
+<li>For mutual exclusion constraints (course can't be in two rooms)</li>
+<li>When you need maximum solving efficiency</li>
+</ul>
+
+<pre>
+# Boolean: Is Math101 scheduled in Room101 on day 1 at time slot 4?
+course_scheduled = model.NewBoolVar('math101_room101_d1_t4')
+</pre>
+
+<p><strong>Integer Variables</strong>:</p>
+<ul>
+<li>When you need to count or accumulate values</li>
+<li>For representing quantities or levels</li>
+<li>When modeling time periods or durations</li>
+</ul>
+
+<pre>
+# Integer: Which time slot (0-15) is Math101 scheduled in Room101 on day 1?
+time_slot = model.NewIntVar(0, 15, 'math101_room101_d1_time')
+</pre>
+
+<h4>Edge Cases: When One Type Clearly Wins</h4>
+
+<p><strong>Boolean Variables Win:</strong></p>
+
+<p>1. <strong>Sparse Assignment Problems</strong></p>
+<pre>
+# GOOD: Boolean approach for sparse classroom assignments
+# Is student i assigned to classroom j? (most combinations are invalid)
+student_room[i, j] = model.NewBoolVar(f'student_{i}_room_{j}')
+# Easy to add: Only valid combinations get a constraint
+model.Add(student_room[invalid_pair] == 0)
+
+# BAD: Integer approach
+# Which room (0-100) is student i assigned to?
+student_room[i] = model.NewIntVar(0, 100, f'student_{i}_room')
+# Harder: Need complex constraints to prevent invalid assignments
+model.Add(student_room[i].NotIn(invalid_rooms_for_student[i]))
+</pre>
+
+<p>2. <strong>Multiple Independent Yes/No Choices</strong></p>
+<pre>
+# GOOD: Boolean approach for equipment needs
+has_projector = model.NewBoolVar('has_projector')
+has_whiteboard = model.NewBoolVar('has_whiteboard')
+has_computers = model.NewBoolVar('has_computers')
+# Easy constraint: Need at least two pieces of equipment
+model.Add(sum([has_projector, has_whiteboard, has_computers]) >= 2)
+
+# BAD: Integer approach using bit flags
+equipment = model.NewIntVar(0, 7, 'equipment_flags')  # 3 bits
+# Complex constraints needed to check individual bits
+</pre>
+
+<p><strong>Integer Variables Win:</strong></p>
+
+<p>1. <strong>Cumulative Resources</strong></p>
+<pre>
+# BAD: Boolean approach for student count
+students_present = [model.NewBoolVar(f'student_{i}') for i in range(100)]
+# Complex to enforce: Room capacity between 15-30 students
+model.Add(sum(students_present) >= 15)
+model.Add(sum(students_present) <= 30)
+
+# GOOD: Integer approach
+student_count = model.NewIntVar(15, 30, 'student_count')
+# Simple and efficient
+</pre>
+
+<h4>Theoretical Guarantees vs. Practical Solutions</h4>
+
+<p><strong>Boolean Variables (SAT Problems)</strong></p>
+<ul>
+<li><strong>Theoretical Guarantee</strong>: Complete decision procedures exist</li>
+<li><strong>Complexity</strong>: NP-complete (proven by Cook-Levin theorem)</li>
+<li><strong>Solver Behavior</strong>: Will definitively tell you if a solution exists</li>
+<li><strong>Search Space</strong>: Finite (2^n possible combinations for n variables)</li>
+</ul>
+
+<pre>
+# Boolean formulation guarantees finding a solution if one exists
+room_assignments = {
+    (course, room): model.NewBoolVar(f'c{course}_r{room}')
+    for course in courses for room in rooms
+}
+# Solver will definitively prove if this is satisfiable
+model.Add(sum(room_assignments.values()) == len(courses))
+</pre>
+
+<p><strong>Integer Variables</strong></p>
+<ul>
+<li><strong>Theoretical Guarantee</strong>: No complete decision procedure for general integer programming</li>
+<li><strong>Complexity</strong>: Undecidable in the general case</li>
+<li><strong>Solver Behavior</strong>: May not terminate for arbitrary constraints</li>
+<li><strong>Search Space</strong>: Can be infinite for unbounded variables</li>
+</ul>
+
+<h2>Results and Analysis</h2>
+
+<p>The solver successfully produced an optimal schedule that maximizes net revenue while satisfying all constraints. Let's analyze the actual results:</p>
+
+<h3>Optimized Schedule</h3>
+
+<table>
+<thead>
+<tr>
+<th>Course</th>
+<th>Classroom</th>
+<th>Day</th>
+<th>Time</th>
+<th>Duration</th>
+<th>Net Revenue</th>
+<th>Period</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chemistry101</td>
+<td>Room102</td>
+<td>1</td>
+<td>08:30</td>
+<td>6 hours</td>
+<td>$6,420.00</td>
+<td>Morning</td>
+</tr>
+<tr>
+<td>Math101</td>
+<td>Room101</td>
+<td>1</td>
+<td>13:00</td>
+<td>2 hours</td>
+<td>$4,000.00</td>
+<td>Afternoon</td>
+</tr>
+<tr>
+<td>Biology101</td>
+<td>Room101</td>
+<td>2</td>
+<td>10:00</td>
+<td>5 hours</td>
+<td>$4,900.00</td>
+<td>Morning</td>
+</tr>
+<tr>
+<td>Physics101</td>
+<td>Room102</td>
+<td>2</td>
+<td>11:30</td>
+<td>3 hours</td>
+<td>$4,770.00</td>
+<td>Morning</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Total Net Revenue: $20,090.00</strong></p>
+
+<h3>Key Observations</h3>
+
+<ol>
+<li><strong>Time Period Optimization</strong>
+<ul>
+<li>Math101 is scheduled in the afternoon (1.1x multiplier)</li>
+<li>Most courses are in morning slots (1.0x multiplier)</li>
+<li>No courses scheduled during premium night hours (1.5x multiplier)</li>
+</ul>
+</li>
+
+<li><strong>Room Allocation</strong>
+<ul>
+<li>Room102 (with lab equipment) is used for Chemistry101 and Physics101</li>
+<li>Room101 (with projector) is used for Math101 and Biology101</li>
+<li>Equipment requirements are perfectly matched</li>
+</ul>
+</li>
+
+<li><strong>Professor Scheduling</strong>
+<ul>
+<li>Prof_Cohen's long courses (Chemistry101 and Biology101) are split across different days</li>
+<li>No professor has overlapping schedules</li>
+<li>Teaching loads are well-distributed</li>
+</ul>
+</li>
+
+<li><strong>Financial Breakdown Example (Chemistry101)</strong>
+<ul>
+<li>Base Revenue: $12,000.00</li>
+<li>Morning Multiplier: 1.0x</li>
+<li>Setup Cost: $180.00</li>
+<li>Professor Cost: $3,000.00</li>
+<li>Net Revenue: $6,420.00</li>
+</ul>
+</li>
+</ol>
+
+<h2>Summary</h2>
+
+<p>Constraint programming provides a powerful approach to solving complex university scheduling problems. By modeling real-world constraints and optimizing for revenue while respecting operational requirements, we can create more efficient and profitable course schedules.</p>
+
+<p>The solution is flexible and can be adapted to different university settings by adjusting:</p>
+<ul>
+<li>Number of classrooms and their equipment</li>
+<li>Professor availability and expertise</li>
+<li>Course requirements and durations</li>
+<li>Cost structures and revenue models</li>
+<li>Time period preferences</li>
+</ul>
+
+<p>This approach demonstrates how modern optimization techniques can transform traditional educational scheduling from a manual, time-consuming process into an automated, revenue-optimizing solution.</p>
+
+</body>
+</html>
